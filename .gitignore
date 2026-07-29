@@ -1,0 +1,17 @@
+# API Keys - 敏感信息，禁止提交
+keys.json
+
+# 系统生成的临时文件
+*.pyc
+__pycache__/
+
+# Python 虚拟环境
+.venv/
+*.egg-info/
+
+# Claude Code 本地配置
+.claude/
+
+# 用量/账单台账（脚本生成或个人数据，不进仓库）
+usage-log.md
+aliyun/usage-history.md
