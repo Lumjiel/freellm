@@ -38,6 +38,40 @@
 
 ## 🚀 Quick Start
 
+### 1. 安装（3 行）
+
+```bash
+git clone https://github.com/Lumjiel/freellm.git && cd freellm
+pip install -e .                              # 零依赖，装完即可 import
+cp keys.example.json keys.json                # 下一步填 key
+```
+
+装机版（不想要源码目录）：`pip install git+https://github.com/Lumjiel/freellm.git`
+
+> ⚠️ **PyPI 上的 `freellm` 不是本项目**（同名已被他人占用）——请勿 `pip install freellm`，会装成别人的包。
+
+### 2. 配置凭证（`keys.json`）
+
+放**当前项目目录**即可；也可用 `FREELLM_KEYS=/path/to/keys.json` 指定（优先级更高）。
+字段名必须与代码一致，**照抄 `keys.example.json` 最省事**：
+
+| 平台 | 凭证字段 | 备注 |
+|:--|:--|:--|
+| `siliconflow` | `key` | 国内直连，建议首选 |
+| `cloudflare` | `account_id` + `token` | 两个都要，`account_id` 参与 API 地址拼接 |
+| `nvidia` | `key` | — |
+| `modelscope` | `token_read` | 注意字段名是 `token_read`，**不是** `token` |
+| `aliyun` | `api_key` | 可缺省：自动回退读 `~/.bailian/config.json` 或 `DASHSCOPE_API_KEY` |
+| `groq` | `key` | 国内需代理：条目里加 `"proxy": "http://127.0.0.1:7897"` |
+
+**最少可用配置**（只配一个平台就能跑）：
+
+```json
+{ "siliconflow": { "key": "sk-你的key" } }
+```
+
+### 3. 跑通
+
 ```python
 from freellm import chat, chat_stream, embed
 
@@ -54,11 +88,9 @@ vec = embed("需要向量化的文本")
 ```
 
 ```bash
-# CLI 调试
-python -m freellm chat '你好'            # 自动选平台
-python -m freellm chat '你好' --stream   # 流式
-python -m freellm platforms              # 查看各平台健康状态
-python -m freellm models                # 查看模型列表
+freellm platforms          # 哪些平台凭证解析成功 / 健康状态
+freellm models             # 当前可选模型（按优先级）
+freellm chat '你好'        # 最小验证：能出字就说明通了
 ```
 
 ---
@@ -131,18 +163,18 @@ freellm.reload()          # keys.json 改过后热加载
 
 ---
 
-## ⚙️ 配置
+## ⚙️ 配置（进阶）
 
-**凭证**：统存 `keys.json`（git 不跟踪）。
+凭证字段见上文「配置凭证」表。其余可选项：
 
-| 字段 | 说明 |
-|------|------|
-| `siliconflow.api_key` | 硅基流动 API Key |
-| `cloudflare.account_id` + `api_token` | Cloudflare 凭证 |
-| `nvidia.api_key` | NVIDIA NIM Key |
-| `modelscope.api_key` | ModelScope Token |
-| `aliyun.api_key` | 阿里云百炼 Key（可缺省，回退读 `~/.bailian/config.json`） |
-| `groq.api_key` | Groq Key |
+| 项 | 位置 | 说明 |
+|:--|:--|:--|
+| `base_url` | 平台条目内 | 覆盖默认 API 地址（走中转 / 自建网关时用） |
+| `proxy` | 平台条目内 | 单平台代理，如 `groq` 在国内需要 |
+| `FREELLM_KEYS` | 环境变量 | 指定 `keys.json` 路径（优先于当前目录） |
+| `FREELLM_DEBUG=1` | 环境变量 | 调试日志输出到 stderr |
+
+`keys.json` 已被 `.gitignore` 忽略，不会进版本库。
 
 **用量台账**：`python scripts/check-all.py` 查额度并记录到 `usage-log.md`。
 
@@ -164,6 +196,7 @@ freellm/
 │   └── test_core.py       # 44 个测试（降级/流式/健康状态）
 ├── scripts/
 │   └── check-all.py       # 一键查 6 平台额度
+├── keys.example.json       # 🔑 凭证模板（复制为 keys.json 再填）
 ├── keys.json              # 🔑 所有平台凭证（git 不跟踪）
 ├── pyproject.toml         # 包定义（零依赖）
 └── CLAUDE.md              # 项目级记忆

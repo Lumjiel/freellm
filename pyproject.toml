@@ -4,6 +4,14 @@ version = "0.2.0"
 description = "最小 LLM 调用层：6 个免费平台互为备胎，零外部依赖"
 requires-python = ">=3.10"
 dependencies = []
+keywords = ["llm", "free-api", "fallback", "openai-compatible", "zero-dependency"]
+
+[project.scripts]
+freellm = "freellm.__main__:_main"
+
+[project.urls]
+Homepage = "https://github.com/Lumjiel/freellm"
+Repository = "https://github.com/Lumjiel/freellm"
 
 [build-system]
 requires = ["hatchling"]
