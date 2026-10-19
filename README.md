@@ -46,7 +46,7 @@ pip install -e .                              # 零依赖，装完即可 import
 cp keys.example.json keys.json                # 下一步填 key
 ```
 
-装机版（不想要源码目录）：`pip install git+https://github.com/Lumjiel/freellm.git`
+装机版（不想要源码目录）：`pip install git+https://github.com/Lumjiel/freellm.git` —— 该方式不含示例文件，`keys.json` 按下面表格手写（只配一个平台即可）。
 
 > ⚠️ **PyPI 上的 `freellm` 不是本项目**（同名已被他人占用）——请勿 `pip install freellm`，会装成别人的包。
 

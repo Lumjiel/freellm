@@ -24,7 +24,8 @@ from ._errors import (
 )
 from ._http import TransportHTTPError, post_json, post_sse
 from ._platforms import (MODEL_META, SPECS, DEFAULT_PRIORITY, Platform,
-                         _models_cache, get_model_tiers, get_platforms)
+                         _find_keys_path, _models_cache, get_model_tiers,
+                         get_platforms)
 
 log = logging.getLogger("freellm")
 
@@ -159,6 +160,22 @@ def _is_model_level(e: LLMError) -> bool:
     return isinstance(e, (ModelError, ContextLengthError))
 
 
+def _no_platforms_error() -> LLMError:
+    """无可用平台时的报错：区分「没配凭证」与「凭证都被拉黑/限流」。"""
+    if not get_platforms():
+        found = _find_keys_path()
+        where = (f"已找到 {found}，但里面没有有效凭证（字段名需与 README「配置凭证」表一致）"
+                 if found else
+                 "未找到 keys.json（查找顺序：$FREELLM_KEYS → 当前目录 → 仓库根目录）")
+        return LLMError(
+            f"没有可用的平台凭证：{where}。\n"
+            "修法：把仓库根目录的 keys.example.json 复制为 keys.json 并填入任一平台的 key，"
+            "或设置 FREELLM_KEYS=/path/to/keys.json。只配一个平台即可跑通。")
+    return LLMError(
+        "所有平台当前都不可用（可能被拉黑或限流）：先 freellm.reset_health() 清空状态，"
+        "再用 freellm.platforms() 查看各平台情况。")
+
+
 def _prepare(messages: str | list[dict], platform: str | None,
              model: str | None):
     """chat / chat_stream 共用前置：规范化消息、解析候选平台、构建模型档位列表。"""
@@ -166,7 +183,7 @@ def _prepare(messages: str | list[dict], platform: str | None,
     plats = get_platforms()
     names = _candidates(platform, plats)
     if not names:
-        raise LLMError("无可用平台（检查 keys.json / 拉黑状态，或 reset_health()）")
+        raise _no_platforms_error()
     explicit_model = model is not None
     if explicit_model:
         model_lists = {n: [model] for n in names}
@@ -353,7 +370,7 @@ def embed(text: str | list[str], *, platform: str | None = None,
     plats = get_platforms()
     names = _candidates(platform, plats)
     if not names:
-        raise LLMError("无可用平台（检查 keys.json / 拉黑状态，或 reset_health()）")
+        raise _no_platforms_error()
     if platform and not model and not plats[platform].spec.embed_model:
         raise LLMError(f"平台 {platform!r} 无默认嵌入模型，请指定 model=")
     errors: dict[str, LLMError] = {}
